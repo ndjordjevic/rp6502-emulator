@@ -17,25 +17,23 @@ The RP6502 firmware runs on two Picos (RIA + VGA), so emulating them means under
 Use an existing C 6502 library via Zig's C interop — get a working CPU fast, focus learning on the RP6502 side. Rewriting the CPU from scratch in Zig is a separate exercise (see Phase 3).
 
 **Resources:**
-- C libraries to evaluate:
-  - [bzotto/MCS6502](https://github.com/bzotto/MCS6502) — simple, callback-based (`ReadByte`/`WriteByte`), easy to integrate
-  - [redcode/6502](https://github.com/redcode/6502) — ANSI C, portable, GPL-3
-  - [floooh/chips](https://github.com/floooh/chips) — header-only C, 6502 + other chips, MIT
 - 6502 instruction set: http://www.6502.org/tutorials/6502opcodes.html
+- Klaus Dormann / Klaus2m5 functional tests: https://github.com/Klaus2m5/6502_65C02_functional_tests
 - Zig C interop: Context7 `/websites/ziglang_master`
+
+**C 6502 library evaluation (deep research):** See **[C 6502 library evaluation](notes/C_6502_LIBRARY_EVALUATION.md)** for a detailed comparison. **Recommendation: use [visrealm/vrEmu6502](https://github.com/visrealm/vrEmu6502)** — MIT, C99, callback API, full W65C02 support, passes all Klaus tests including W65C02 extended opcodes, actively maintained (commits into 2026), no dependencies.
 
 **Zig learning:** `@cImport`, C interop, build system (`addCSourceFile`), linking C code
 
 **Tasks:**
-- [ ] Evaluate C 6502 libraries (callback API, 65C02 support, license)
-- [ ] Pick one and add it to the project (vendor the C source or use Zig package)
-- [ ] Wire it into `build.zig` (`addCSourceFile` or `addCSourceFiles`)
-- [ ] Create `src/cpu.zig` wrapper: thin Zig API around the C library
-- [ ] Define `readByte(addr)` / `writeByte(addr, val)` callbacks that the C lib calls
-- [ ] Back with flat 64 KB RAM array for now
-- [ ] Verify 65C02 extensions work (W65C02S uses: STZ, BRA, PHX/PHY/PLX/PLY, TRB, TSB)
-- [ ] Write tests: execute hand-assembled programs (`LDA #$42; STA $00; BRK`)
-- [ ] Pass a 6502 functional test suite
+- [x] Evaluate C 6502 libraries (callback API, 65C02 support, license) — see [C_6502_LIBRARY_EVALUATION.md](notes/C_6502_LIBRARY_EVALUATION.md)
+- [x] Pick one and add it to the project (vendor the C source or use Zig package) — vrEmu6502 vendored in `vendor/vrEmu6502/`, wired in `build.zig`
+- [x] Wire it into `build.zig` (`addCSourceFile` or `addCSourceFiles`)
+- [x] Create `src/cpu.zig` wrapper: thin Zig API around the C library
+- [x] Define `readByte(addr)` / `writeByte(addr, val)` callbacks that the C lib calls
+- [x] Back with flat 64 KB RAM array for now
+- [x] Write tests: execute hand-assembled programs (`LDA #$42; STA $00; BRK`)
+- [x] Pass a 6502 functional test suite
 
 ### 1.2 Memory Bus (Address Decoding)
 

@@ -16,6 +16,14 @@ Prefer **local workspace** when available.
 - **CC65 RP6502:** https://cc65.github.io/doc/rp6502.html
 - **Key projects:** `rp6502/` = firmware (primary emulator reference), `examples/` = test ROMs, `schematic/`, `picocomputer.github.io/`, `rp6502-learning/` (notes, WORKSPACE_PROJECTS.md). Full list: `rp6502-learning/notes/WORKSPACE_PROJECTS.md`
 
+# vrEmu6502 (6502 CPU library)
+
+- **Workspace:** `vrEmu6502/` — full source in workspace at `/Users/nenaddjordjevic/CProjects/vrEmu6502/`
+- **API / implementation:** `vrEmu6502/src/vrEmu6502.h`, `vrEmu6502/src/vrEmu6502.c`
+- **Docs:** `vrEmu6502/README.md`; upstream: https://github.com/visrealm/vrEmu6502
+- **Tests / test ROMs:** `vrEmu6502/test/` (CMake test runner, Klaus Dormann / Klaus2m5 functional tests in `test/programs/`: 6502_functional_test, 6502_decimal_test, 65C02_decimal_test, 65C02_extended_opcodes_test, W65C02_extended_opcodes_test, R65C02_extended_opcodes_test)
+- Use workspace `vrEmu6502/` for API details, callback signatures, and CPU model (e.g. W65C02) when wiring the emulator.
+
 # Raspberry Pi Pico (for Phase 2 VGA / firmware only)
 
 **Not** for RP6502/Picocomputer/6502 questions.
