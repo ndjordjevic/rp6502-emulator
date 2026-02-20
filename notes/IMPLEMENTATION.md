@@ -44,14 +44,14 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 **Zig learning:** `switch`, enums, modules/files
 
 **Tasks:**
-- [ ] Create `src/bus.zig` with address decoding
-- [ ] Route `$0000–$FEFF` → system RAM (64 KB array)
-- [ ] Route `$FF00–$FFCF` → unassigned (return `$00`)
-- [ ] Route `$FFD0–$FFDF` → VIA stub (return `$00`, ignore writes)
-- [ ] Route `$FFE0–$FFFF` → RIA registers (placeholder, next step)
-- [ ] CPU vectors (`$FFFA–$FFFF`) are inside RIA register space
-- [ ] Wire CPU's `readByte`/`writeByte` to the bus
-- [ ] Test: verify correct routing with reads/writes at boundary addresses
+- [x] Create `src/bus.zig` with address decoding
+- [x] Route `$0000–$FEFF` → system RAM (64 KB array)
+- [x] Route `$FF00–$FFCF` → unassigned (return `$00`)
+- [x] Route `$FFD0–$FFDF` → VIA stub (return `$00`, ignore writes)
+- [x] Route `$FFE0–$FFFF` → RIA registers (placeholder, next step)
+- [x] CPU vectors (`$FFFA–$FFFF`) are inside RIA register space
+- [x] Wire CPU's `readByte`/`writeByte` to the bus
+- [x] Test: verify correct routing with reads/writes at boundary addresses
 
 ### 1.3 RIA Registers (Data Path)
 

@@ -4,6 +4,7 @@
 const std = @import("std");
 const cpu = @import("cpu.zig");
 const memory = @import("memory.zig");
+const bus = @import("bus.zig");
 
 test "LDA #$42; STA $00; BRK" {
     // Reset vector: CPU starts at $0200
@@ -17,7 +18,7 @@ test "LDA #$42; STA $00; BRK" {
     memory.ram[start + 3] = 0x00;
     memory.ram[start + 4] = 0x00; // BRK
 
-    var c = try cpu.Cpu.create(memory.readByte, memory.writeByte);
+    var c = try cpu.Cpu.create(bus.readByte, bus.writeByte);
     defer c.destroy();
     c.reset();
 
@@ -28,4 +29,35 @@ test "LDA #$42; STA $00; BRK" {
 
     try std.testing.expectEqual(@as(u8, 0x42), memory.ram[0]);
     try std.testing.expectEqual(@as(u8, 0x42), c.getA());
+}
+
+test "bus address decoding" {
+    // RAM: $0000–$FEFF
+    memory.ram[0x0000] = 0x11;
+    memory.ram[0xFEFF] = 0x22;
+    try std.testing.expectEqual(@as(u8, 0x11), bus.readByte(0x0000, false));
+    try std.testing.expectEqual(@as(u8, 0x22), bus.readByte(0xFEFF, false));
+
+    bus.writeByte(0x0100, 0xAA);
+    try std.testing.expectEqual(@as(u8, 0xAA), memory.ram[0x0100]);
+
+    // Unassigned: $FF00–$FFCF — read $00, writes ignored
+    try std.testing.expectEqual(@as(u8, 0x00), bus.readByte(0xFF00, false));
+    try std.testing.expectEqual(@as(u8, 0x00), bus.readByte(0xFFCF, false));
+    bus.writeByte(0xFF50, 0xBB); // no-op
+    try std.testing.expectEqual(@as(u8, 0x00), bus.readByte(0xFF50, false));
+
+    // VIA stub: $FFD0–$FFDF — read $00, writes ignored
+    try std.testing.expectEqual(@as(u8, 0x00), bus.readByte(0xFFD0, false));
+    try std.testing.expectEqual(@as(u8, 0x00), bus.readByte(0xFFDF, false));
+    bus.writeByte(0xFFD5, 0xCC); // no-op
+    try std.testing.expectEqual(@as(u8, 0x00), bus.readByte(0xFFD5, false));
+
+    // RIA placeholder: $FFE0–$FFFF — reads/writes go to RAM for vectors
+    memory.ram[0xFFFC] = 0x34;
+    memory.ram[0xFFFD] = 0x12;
+    try std.testing.expectEqual(@as(u8, 0x34), bus.readByte(0xFFFC, false));
+    try std.testing.expectEqual(@as(u8, 0x12), bus.readByte(0xFFFD, false));
+    bus.writeByte(0xFFE0, 0xDD);
+    try std.testing.expectEqual(@as(u8, 0xDD), memory.ram[0xFFE0]);
 }
