@@ -1,0 +1,11 @@
+.{
+    .name = .rp6502_emulator,
+    .fingerprint = 0xa8bc8d91f4cf9324,
+    .version = "0.1.0",
+    .minimum_zig_version = "0.15.2",
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
