@@ -68,3 +68,26 @@ test "bus address decoding" {
     try std.testing.expectEqual(@as(u8, 0x34), bus.readByte(0xFFFC, false));
     try std.testing.expectEqual(@as(u8, 0x12), bus.readByte(0xFFFD, false));
 }
+
+test "RIA UART registers (readByte, pushRx)" {
+    // READY ($FFE0): bit 7 = TX ready, bit 6 = RX has data. Empty => 0x80 only.
+    try std.testing.expectEqual(@as(u8, 0x80), ria.readByte(ria.ADDR_READY));
+
+    // TX ($FFE1): read is undefined, we return 0
+    try std.testing.expectEqual(@as(u8, 0x00), ria.readByte(ria.ADDR_TX));
+
+    // RX ($FFE2): empty => 0
+    try std.testing.expectEqual(@as(u8, 0x00), ria.readByte(ria.ADDR_RX));
+
+    // Push a byte; READY gets bit 6 set, RX returns the byte
+    ria.pushRx(0xAB);
+    try std.testing.expectEqual(@as(u8, 0xC0), ria.readByte(ria.ADDR_READY));
+    try std.testing.expectEqual(@as(u8, 0xAB), ria.readByte(ria.ADDR_RX));
+
+    // After read, RX empty again; READY back to 0x80
+    try std.testing.expectEqual(@as(u8, 0x80), ria.readByte(ria.ADDR_READY));
+    try std.testing.expectEqual(@as(u8, 0x00), ria.readByte(ria.ADDR_RX));
+
+    // writeByte TX: no crash in test (stdout not used when is_test)
+    ria.writeByte(ria.ADDR_TX, 0x58);
+}
