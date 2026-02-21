@@ -8,6 +8,38 @@ The RP6502 firmware runs on two Picos (RIA + VGA), so emulating them means under
 
 ---
 
+## Strategy: Emulator-Driven Learning
+
+The emulator is the **primary learning vehicle** for the RP6502. Each milestone follows the same loop:
+
+1. **Study** — Read the relevant firmware source and documentation
+2. **Implement** — Build the feature in the emulator
+3. **Test** — Validate with a 6502 program (proves understanding)
+
+This naturally covers Learning Plan phases 4–8 (chip interactions, RIA firmware, VGA firmware, OS API, advanced topics). The Learning Plan (`rp6502-learning/notes/LEARNING_PLAN.md`) serves as the **reference checklist** of topics to understand; the emulator milestones here are **how you learn them**.
+
+**Two parallel tracks:**
+- **Track A: Emulator** (primary) — study firmware, implement, test. No hardware needed.
+- **Track B: Hardware** (at the bench) — assemble remaining ICs, load RIA firmware, probe with logic analyzer, compare emulator vs real hardware. Runs whenever you're ready.
+
+### Milestone → Learning Plan mapping
+
+| Emulator Milestone | Learning Plan Topics Covered |
+|---|---|
+| 1.1 CPU Core | Phase 1.1 (W65C02S overview) |
+| 1.2 Memory Bus | Phase 4.1 (6502 bus), Phase 4.3 (memory map) |
+| 1.3 Echo Terminal | Phase 5.2 (UART registers) |
+| 1.4 XRAM Portals | Phase 4.3 (XRAM), Phase 5.2 (XRAM access) |
+| 1.5 OS Call Mechanism | Phase 5.2 (OS call registers), Phase 7.1 (OS API) |
+| 1.6 ROM Loading & Reset | Phase 5.1 (RIA initialization), Phase 7.1 (ABI) |
+| 1.7 File I/O | Phase 5.3 (Storage), Phase 7.1 (File I/O calls) |
+| 1.8 Monitor Shell | Phase 5.3 (Monitor) |
+| 1.9 Run Real Programs | Phase 7.2 (6502 software development) |
+| Phase 2: VGA | Phase 6 (VGA firmware), Phase 7.3 (video programming) |
+| Phase 2: Audio | Phase 8.3 (Audio systems) |
+
+---
+
 ## Phase 1: RIA Only (Terminal Mode)
 
 **Goal:** Emulate the system without VGA Pico — 6502 CPU, RAM, XRAM, RIA registers, OS API, monitor shell — accessed through a host terminal.
@@ -18,6 +50,8 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 
 **Resources:**
 - 6502 instruction set: http://www.6502.org/tutorials/6502opcodes.html
+- 65C02 Assembly (Wikibooks): https://en.wikibooks.org/wiki/65c02_Assembly
+- 6502 must-read books: http://www.6502.org/books
 - Klaus Dormann / Klaus2m5 functional tests: https://github.com/Klaus2m5/6502_65C02_functional_tests
 - Zig C interop: Context7 `/websites/ziglang_master`
 
@@ -26,14 +60,14 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 **Zig learning:** `@cImport`, C interop, build system (`addCSourceFile`), linking C code
 
 **Tasks:**
-- [x] Evaluate C 6502 libraries (callback API, 65C02 support, license) — see [C_6502_LIBRARY_EVALUATION.md](notes/C_6502_LIBRARY_EVALUATION.md)
-- [x] Pick one and add it to the project (vendor the C source or use Zig package) — vrEmu6502 vendored in `vendor/vrEmu6502/`, wired in `build.zig`
-- [x] Wire it into `build.zig` (`addCSourceFile` or `addCSourceFiles`)
-- [x] Create `src/cpu.zig` wrapper: thin Zig API around the C library
-- [x] Define `readByte(addr)` / `writeByte(addr, val)` callbacks that the C lib calls
-- [x] Back with flat 64 KB RAM array for now
-- [x] Write tests: execute hand-assembled programs (`LDA #$42; STA $00; BRK`)
-- [x] Pass a 6502 functional test suite
+- [✔] Evaluate C 6502 libraries (callback API, 65C02 support, license) — see [C_6502_LIBRARY_EVALUATION.md](notes/C_6502_LIBRARY_EVALUATION.md)
+- [✔] Pick one and add it to the project (vendor the C source or use Zig package) — vrEmu6502 vendored in `vendor/vrEmu6502/`, wired in `build.zig`
+- [✔] Wire it into `build.zig` (`addCSourceFile` or `addCSourceFiles`)
+- [✔] Create `src/cpu.zig` wrapper: thin Zig API around the C library
+- [✔] Define `readByte(addr)` / `writeByte(addr, val)` callbacks that the C lib calls
+- [✔] Back with flat 64 KB RAM array for now
+- [✔] Write tests: execute hand-assembled programs (`LDA #$42; STA $00; BRK`)
+- [✔] Pass a 6502 functional test suite
 
 ### 1.2 Memory Bus (Address Decoding)
 
@@ -44,86 +78,114 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 **Zig learning:** `switch`, enums, modules/files
 
 **Tasks:**
-- [x] Create `src/bus.zig` with address decoding
-- [x] Route `$0000–$FEFF` → system RAM (64 KB array)
-- [x] Route `$FF00–$FFCF` → unassigned (return `$00`)
-- [x] Route `$FFD0–$FFDF` → VIA stub (return `$00`, ignore writes)
-- [x] Route `$FFE0–$FFFF` → RIA registers (placeholder, next step)
-- [x] CPU vectors (`$FFFA–$FFFF`) are inside RIA register space
-- [x] Wire CPU's `readByte`/`writeByte` to the bus
-- [x] Test: verify correct routing with reads/writes at boundary addresses
+- [✔] Create `src/bus.zig` with address decoding
+- [✔] Route `$0000–$FEFF` → system RAM (64 KB array)
+- [✔] Route `$FF00–$FFCF` → unassigned (return `$00`)
+- [✔] Route `$FFD0–$FFDF` → VIA stub (return `$00`, ignore writes)
+- [✔] Route `$FFE0–$FFFF` → RIA registers (placeholder, next step)
+- [✔] CPU vectors (`$FFFA–$FFFF`) are inside RIA register space
+- [✔] Wire CPU's `readByte`/`writeByte` to the bus
+- [✔] Test: verify correct routing with reads/writes at boundary addresses
 
-### 1.3 RIA Registers (Data Path)
+### 1.3 Echo Terminal (Milestone 1) ← current
 
-**Resources:**
-- RIA register map: https://picocomputer.github.io/ria.html
-- RIA firmware source: `/Users/nenaddjordjevic/CProjects/rp6502/src/ria/`
-
-**Zig learning:** packed structs, bitwise ops, slices
-
-**Tasks:**
-- [ ] Create `src/ria.zig` with register file struct
-- [ ] Implement UART registers: READY ($FFE0), TX ($FFE1), RX ($FFE2)
-- [ ] Implement VSYNC counter ($FFE3) — increment at ~60 Hz
-- [ ] Implement XRAM portal 0: RW0 ($FFE4), STEP0 ($FFE5), ADDR0 ($FFE6–7)
-- [ ] Implement XRAM portal 1: RW1 ($FFE8), STEP1 ($FFE9), ADDR1 ($FFEA–B)
-- [ ] Implement XRAM storage: 64 KB byte array accessed through portals
-- [ ] Implement XSTACK ($FFEC): 512-byte push/pop stack
-- [ ] Implement ERRNO ($FFED–E): 16-bit OS error code
-- [ ] Implement OP ($FFEF): write triggers OS call (placeholder)
-- [ ] Implement IRQ register ($FFF0)
-- [ ] Implement OS return area: RETURN/$80, BUSY, LDA/$A9, A, LDX/$A2, X, RTS/$60
-- [ ] Implement SREG ($FFF8–B): 32-bit extended register
-- [ ] Implement vectors: NMI ($FFFA), RESET ($FFFC), IRQ ($FFFE)
-- [ ] Test: 6502 program writes to TX → byte appears (stub for now)
-
-### 1.4 Console I/O (Host Terminal)
+**Study first:**
+- `rp6502/src/ria/sys/com.h`, `com.c` — UART config, TX/RX circular buffers, stdio driver
+- `rp6502/src/ria/sys/ria.c` — CASE_READ/WRITE for $FFE0–$FFE2
+- Picocomputer docs: https://picocomputer.github.io/ria.html (UART section)
+- Reference: `notes/UART_EMULATOR_REFERENCE.md`
+- Learning plan: Phase 5.2 (UART registers)
 
 **Zig learning:** `std.posix`, raw terminal mode, non-blocking I/O
 
 **Tasks:**
-- [ ] Put host terminal into raw mode (no echo, no line buffering)
-- [ ] Wire TX ($FFE1) write → emit byte to stdout
-- [ ] Wire RX ($FFE2) read → consume byte from stdin
-- [ ] Wire READY ($FFE0) bits: bit 7 = TX ready, bit 6 = RX has data
-- [ ] Implement non-blocking stdin polling
-- [ ] Restore terminal mode on exit (cleanup)
-- [ ] Test: 6502 program that echoes typed characters
+- [✔] Create `src/ria.zig` with register file (UART)
+- [✔] Implement UART registers: READY ($FFE0), TX ($FFE1), RX ($FFE2)
+- [✔] Wire TX ($FFE1) write → emit byte to stdout
+- [✔] Wire RX ($FFE2) read → consume byte from stdin buffer
+- [✔] Wire READY ($FFE0) bits: bit 7 = TX ready, bit 6 = RX has data
+- [✔] Implement non-blocking stdin polling (poll with timeout 0 on Unix; Windows TBD)
+- [✔] Test: 6502 program writes to TX → byte appears ("Hi" demo)
+- [✔] Put host terminal into raw mode (no echo, no line buffering)
+- [✔] Restore terminal mode on exit (cleanup)
+- [✔] Test: 6502 echo program — type a key, see it printed (BIT $FFE0, LDA $FFE2, STA $FFE1 loop)
 
-### 1.5 RESET and Boot Sequence
+**Done when:** You can run a 6502 echo program — type a key, see it printed — in the host terminal.
 
-**Resources:**
-- Boot process: `/Users/nenaddjordjevic/CProjects/rp6502/src/ria/main.c`
-- .rp6502 file format: https://picocomputer.github.io/os.html
+### 1.4 XRAM Portals (Milestone 2)
 
-**Zig learning:** file I/O, command-line args, error handling
+**Study first:**
+- `rp6502/src/ria/sys/ria.c` — CASE_READ/WRITE for $FFE4 and $FFE8, xram array, STEP/ADDR logic
+- `rp6502/src/ria/sys/mem.h` — REGS/REGSW macros, register layout
+- Picocomputer docs: https://picocomputer.github.io/ria.html (XRAM section)
+- Learning plan: Phase 4.3 (Memory System), Phase 5.2 (XRAM access)
+
+**Zig learning:** slices, signed/unsigned step arithmetic
+
+**Tasks:**
+- [ ] Add 64 KB XRAM array
+- [ ] Implement portal 0: RW0 ($FFE4), STEP0 ($FFE5), ADDR0 ($FFE6–7) — read/write XRAM[ADDR0], auto-increment ADDR0 by STEP0
+- [ ] Implement portal 1: RW1 ($FFE8), STEP1 ($FFE9), ADDR1 ($FFEA–B)
+- [ ] Expand `bus.zig` to route $FFE3–$FFEB to `ria.zig` (currently only $FFE0–$FFE2)
+- [ ] Test: 6502 sets ADDR0, writes bytes via RW0, reads them back
+
+**Done when:** 6502 can store and retrieve data in XRAM through both portals with auto-stepping.
+
+### 1.5 OS Call Mechanism (Milestone 3)
+
+**Study first:**
+- `rp6502/src/ria/sys/ria.c` — action loop, CASE_WRITE($FFEF), BUSY handshake, self-modifying code at $FFF0–$FFF7
+- `rp6502/src/ria/api/api.c` — OS call dispatch table
+- OS ABI docs: https://picocomputer.github.io/os.html
+- Learning plan: Phase 5.2 (OS call registers), Phase 7.1 (OS API)
+
+**Zig learning:** state machines, tagged unions, enum dispatch
+
+**Tasks:**
+- [ ] Implement XSTACK ($FFEC): 512-byte push/pop stack
+- [ ] Implement ERRNO ($FFED–E): 16-bit OS error code
+- [ ] Implement OP ($FFEF): write triggers OS call by operation ID
+- [ ] Implement BUSY handshake ($FFF1): bit 7 = 1 while processing, BRA offset = $FE (spin)
+- [ ] Implement completion: BUSY bit 7 = 0, BRA offset = $00, set A and X return values
+- [ ] Understand and implement the self-modifying code trick ($FFF0–$FFF7: LDA #A, LDX #X, RTS)
+- [ ] Implement IRQ register ($FFF0)
+- [ ] Implement SREG ($FFF8–B): 32-bit extended register
+- [ ] Implement VSYNC counter ($FFE3): increment at ~60 Hz
+- [ ] Implement basic ops: `zxstack` (0x00), `phi2` (0x01), `codepage` (0x02), `lrand` (0x03)
+- [ ] Implement `stdin_opt`, `clock_gettime`, `clock_settime`
+- [ ] Expand `bus.zig` to route $FFEC–$FFF9 to `ria.zig`
+- [ ] Test: 6502 invokes `zxstack` and `lrand`, gets result back
+
+**Done when:** 6502 can call OS operations via OP write, spin on BUSY, and receive return values.
+
+### 1.6 ROM Loading & Reset (Milestone 4)
+
+**Study first:**
+- `rp6502/src/ria/mon/rom.c` — ROM loader, .rp6502 file format parsing
+- `rp6502/src/ria/main.c` — boot sequence, reset flow
+- .rp6502 format: https://picocomputer.github.io/os.html
+- Learning plan: Phase 5.1 (RIA initialization)
+
+**Zig learning:** file I/O, command-line args (`std.process.args`), error handling
 
 **Tasks:**
 - [ ] Parse command-line args (ROM file path, drive directory)
-- [ ] Load a .rp6502 ROM file into RAM
+- [ ] Load .rp6502 ROM file into RAM (parse header, load segments)
 - [ ] Support raw binary loading as alternative
-- [ ] Set RESET vector ($FFFC–$FFFD) to entry point
+- [ ] Set RESET vector ($FFFC–$FFFD) to entry point from ROM
 - [ ] Implement reset sequence: hold CPU → load → release
-- [ ] Test: load and run a simple ROM from disk
+- [ ] Test: load and run a simple compiled program from disk
 
-### 1.6 OS Call Mechanism
+**Done when:** `zig build run -- hello.rp6502` loads and runs a compiled program.
 
-**Resources:**
-- OS ABI: https://picocomputer.github.io/os.html
-- Firmware: `/Users/nenaddjordjevic/CProjects/rp6502/src/ria/api/`
+### 1.7 File I/O (Milestone 5)
 
-**Zig learning:** state machines, tagged unions
-
-**Tasks:**
-- [ ] Implement OP ($FFEF) write → dispatch OS call by operation ID
-- [ ] Implement BUSY handshake: bit 7 = 1 while processing, BRA offset = $FE (spin)
-- [ ] Implement completion: BUSY bit 7 = 0, BRA offset = $00, set A and X return values
-- [ ] Understand the self-modifying code trick ($FFF1–$FFF7)
-- [ ] Implement basic ops: `zxstack`, `phi2`, `codepage`, `lrand`
-- [ ] Implement `stdin_opt`, `clock_gettime`, `clock_settime`
-- [ ] Test: 6502 invokes OS call and gets result back
-
-### 1.7 File I/O Operations
+**Study first:**
+- `rp6502/src/ria/api/osfil.c` — file operation implementations
+- `rp6502/src/ria/api/osdir.c` — directory operation implementations
+- `rp6502/src/ria/usb/msc.c` — USB mass storage (what the emulator replaces with host filesystem)
+- OS docs: https://picocomputer.github.io/os.html (file I/O calls)
+- Learning plan: Phase 5.3 (Storage), Phase 7.1 (File I/O)
 
 **Zig learning:** `std.fs`, error unions, allocators
 
@@ -136,22 +198,19 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - [ ] Implement `lseek`
 - [ ] Implement `unlink`, `rename`
 - [ ] Implement `fstat`
+- [ ] Implement `opendir`, `closedir`, `readdir`
+- [ ] Implement `mkdir`, `chdir`, `getcwd`
 - [ ] Test: 6502 program opens a file, reads it, prints contents
 
-### 1.8 Directory Operations
+**Done when:** 6502 programs can read/write files and list directories on the host filesystem.
 
-**Tasks:**
-- [ ] Implement `opendir`
-- [ ] Implement `closedir`
-- [ ] Implement `readdir`
-- [ ] Implement `mkdir`
-- [ ] Implement `chdir`, `getcwd`
-- [ ] Test: listing files from 6502
+### 1.8 Monitor Shell (Milestone 6)
 
-### 1.9 Monitor (Command Shell)
-
-**Resources:**
-- Monitor source: `/Users/nenaddjordjevic/CProjects/rp6502/src/ria/mon/`
+**Study first:**
+- `rp6502/src/ria/mon/mon.c` — monitor main loop, command parser
+- `rp6502/src/ria/mon/rom.c` — ROM loading commands
+- `rp6502/src/ria/mon/ram.c` — memory read/write commands
+- Learning plan: Phase 5.3 (Monitor)
 
 **Tasks:**
 - [ ] Implement command parser (input line → command + args)
@@ -163,20 +222,27 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - [ ] Implement `set phi2` — configure clock speed
 - [ ] Implement memory read/write (`0000` to read, `0000:FF` to write)
 - [ ] Implement `reboot`, `reset`
-- [ ] Monitor runs when no 6502 program is loaded (or after CTRL-ALT-DEL)
-- [ ] Test: type `help`, `ls`, `load` and see expected output
+- [ ] Monitor runs when no 6502 program is loaded (or after break)
+- [ ] Test: type `help`, `ls`, `load hello.rp6502` and see expected output
 
-### 1.10 Run Real Programs
+**Done when:** The emulator boots into a monitor prompt, you can list files, load and run programs.
 
-**Resources:**
-- Example programs: `/Users/nenaddjordjevic/CProjects/examples/`
+### 1.9 Run Real Programs (Milestone 7)
+
+**Study first:**
+- Example programs: `/Users/nenaddjordjevic/CProjects/examples/src/`
+- ehBASIC: `/Users/nenaddjordjevic/CProjects/ehbasic/`
+- Learning plan: Phase 7.2 (6502 software development)
 
 **Tasks:**
 - [ ] Load and run hello world / simple text programs
 - [ ] Load and run memory test programs
-- [ ] Load and run ehbasic
+- [ ] Load and run ehBASIC
 - [ ] Debug and fix issues until real programs work
+- [ ] Compare behavior against real hardware (if assembled)
 - [ ] Document any RP6502 behavior discovered during testing
+
+**Done when:** ehBASIC runs in the emulator and you can type BASIC programs.
 
 ---
 

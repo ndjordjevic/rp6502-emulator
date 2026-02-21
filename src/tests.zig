@@ -5,6 +5,7 @@ const std = @import("std");
 const cpu = @import("cpu.zig");
 const memory = @import("memory.zig");
 const bus = @import("bus.zig");
+const ria = @import("ria.zig");
 
 test "LDA #$42; STA $00; BRK" {
     // Reset vector: CPU starts at $0200
@@ -53,11 +54,17 @@ test "bus address decoding" {
     bus.writeByte(0xFFD5, 0xCC); // no-op
     try std.testing.expectEqual(@as(u8, 0x00), bus.readByte(0xFFD5, false));
 
-    // RIA placeholder: $FFE0–$FFFF — reads/writes go to RAM for vectors
+    // RIA UART: $FFE0–$FFE2 — READY (read), TX (write), RX (read)
+    try std.testing.expectEqual(@as(u8, 0x80), bus.readByte(0xFFE0, false)); // READY: TX ready, no RX data
+    ria.pushRx(0xAB);
+    try std.testing.expectEqual(@as(u8, 0xC0), bus.readByte(0xFFE0, false)); // READY: TX + RX has data
+    try std.testing.expectEqual(@as(u8, 0xAB), bus.readByte(0xFFE2, false)); // RX
+    try std.testing.expectEqual(@as(u8, 0x80), bus.readByte(0xFFE0, false)); // READY: RX empty again
+    bus.writeByte(0xFFE1, 0x58); // TX write (no-op in test, just no crash)
+
+    // $FFE3–$FFFF: still RAM (vectors)
     memory.ram[0xFFFC] = 0x34;
     memory.ram[0xFFFD] = 0x12;
     try std.testing.expectEqual(@as(u8, 0x34), bus.readByte(0xFFFC, false));
     try std.testing.expectEqual(@as(u8, 0x12), bus.readByte(0xFFFD, false));
-    bus.writeByte(0xFFE0, 0xDD);
-    try std.testing.expectEqual(@as(u8, 0xDD), memory.ram[0xFFE0]);
 }
