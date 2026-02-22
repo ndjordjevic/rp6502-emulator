@@ -81,7 +81,7 @@ So on real hardware: 6502 reads $FFE0 to get/update READY and to “latch” RX 
 
 ### State
 - **TX:** No buffer; write goes straight to stdout. So “TX ready” is always true (hence READY bit 7 always set).
-- **RX:** Circular buffer `rx_buf[256]`, indices `rx_read` / `rx_write`. `pushRx()` for tests or stdin; `pollStdin()` in main loop to fill from stdin (non-blocking; Windows TBD).
+- **RX:** Circular buffer `rx_buf[256]`, indices `rx_read` / `rx_write`. `pushRx()` for tests or stdin; `pollStdin()` in main loop to fill from stdin (non-blocking on Unix/macOS).
 
 ### Callbacks
 - **readByte(addr):** $FFE0 → READY; $FFE1 → 0 (TX write-only); $FFE2 → consume and return next RX byte (or 0 if empty).

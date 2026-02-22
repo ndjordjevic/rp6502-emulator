@@ -4,6 +4,20 @@ Ways to use an **external terminal** (e.g. Terminal.app) as the "serial console"
 
 ---
 
+## Terminal clients (macOS)
+
+For connecting to the emulator (or real hardware):
+
+| Client     | Notes |
+|------------|--------|
+| **minicom**| `brew install minicom` — classic serial terminal; best for “real serial” feel. |
+| **screen** | Built-in — attach to serial devices and PTYs: `screen /dev/tty.xxx 115200`. No install. |
+| **tmux**   | `brew install tmux` — session multiplexer; attach to a running emulator session (see below). Not a serial client. |
+
+**Recommendation:** Use **minicom** for a dedicated serial terminal (once the emulator exposes a PTY/socket), or **screen** for zero-install attachment to a PTY. For “just use another window on the same process,” use **tmux** (option 2 below).
+
+---
+
 ## 1. Named pipes (FIFOs) — no code change
 
 Create two FIFOs and redirect the emulator's stdin/stdout to them. The external terminal reads from one and writes to the other.

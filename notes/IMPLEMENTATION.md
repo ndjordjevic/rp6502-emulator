@@ -34,7 +34,8 @@ This naturally covers Learning Plan phases 4–8 (chip interactions, RIA firmwar
 | 1.6 ROM Loading & Reset | Phase 5.1 (RIA initialization), Phase 7.1 (ABI) |
 | 1.7 File I/O | Phase 5.3 (Storage), Phase 7.1 (File I/O calls) |
 | 1.8 Monitor Shell | Phase 5.3 (Monitor) |
-| 1.9 Run Real Programs | Phase 7.2 (6502 software development) |
+| 1.9 External terminal (minicom/screen) | Terminal/serial access (like real hardware) |
+| 1.10 Run Real Programs | Phase 7.2 (6502 software development) |
 | Phase 2: VGA | Phase 6 (VGA firmware), Phase 7.3 (video programming) |
 | Phase 2: Audio | Phase 8.3 (Audio systems) |
 
@@ -104,7 +105,7 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - [✔] Wire TX ($FFE1) write → emit byte to stdout
 - [✔] Wire RX ($FFE2) read → consume byte from stdin buffer
 - [✔] Wire READY ($FFE0) bits: bit 7 = TX ready, bit 6 = RX has data
-- [✔] Implement non-blocking stdin polling (poll with timeout 0 on Unix; Windows TBD)
+- [✔] Implement non-blocking stdin polling (poll with timeout 0 on Unix/macOS)
 - [✔] Test: 6502 program writes to TX → byte appears ("Hi" demo)
 - [✔] Put host terminal into raw mode (no echo, no line buffering)
 - [✔] Restore terminal mode on exit (cleanup)
@@ -227,7 +228,20 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 
 **Done when:** The emulator boots into a monitor prompt, you can list files, load and run programs.
 
-### 1.9 Run Real Programs (Milestone 7)
+### 1.9 External terminal (minicom / screen)
+
+**Goal:** Access the emulator from a serial-style terminal on the host (e.g. macOS), same as connecting to the real Picocomputer over USB serial.
+
+**On macOS:** Use **minicom** (`brew install minicom`) or **screen** (built-in). See `notes/EXTERNAL_TERMINAL.md` for client comparison and workarounds.
+
+**Reference:** `notes/EXTERNAL_TERMINAL.md` — current workarounds (FIFOs, tmux, socat) without code changes.
+
+**Tasks:**
+- [ ] Expose UART so minicom or screen can connect (e.g. PTY, virtual serial port, or TCP socket server)
+
+**Done when:** You can open minicom or screen, connect to the emulator, and use it as the 6502 console.
+
+### 1.10 Run Real Programs (Milestone 7)
 
 **Study first:**
 - Example programs: `/Users/nenaddjordjevic/CProjects/examples/src/`
