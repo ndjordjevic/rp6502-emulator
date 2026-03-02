@@ -12,7 +12,7 @@ const UNASSIGNED_END: u16 = 0xFFCF;
 const VIA_START: u16 = 0xFFD0; // $FFD0–$FFDF: VIA (W65C22S)
 const VIA_END: u16 = 0xFFDF;
 const RIA_START: u16 = 0xFFE0; // $FFE0–$FFFF: RIA registers (includes vectors $FFFA–$FFFF)
-const RIA_UART_END: u16 = 0xFFE2; // $FFE0–$FFE2: UART (READY, TX, RX)
+const RIA_XRAM_END: u16 = 0xFFEB; // $FFE0–$FFEB: UART (READY,TX,RX) + VSYNC + XRAM portals
 
 /// Read callback for vrEmu6502: (address, is_debug_read) -> byte. C-callable.
 pub fn readByte(addr: u16, is_dbg: bool) callconv(.c) u8 {
@@ -26,10 +26,10 @@ pub fn readByte(addr: u16, is_dbg: bool) callconv(.c) u8 {
     if (addr >= VIA_START and addr <= VIA_END) {
         return 0x00; // VIA stub
     }
-    if (addr >= RIA_START and addr <= RIA_UART_END) {
+    if (addr >= RIA_START and addr <= RIA_XRAM_END) {
         return ria.readByte(addr);
     }
-    // $FFE3–$FFFF: rest of RIA (VSYNC, XRAM, vectors, etc.) — use RAM for vectors
+    // $FFEC–$FFFF: rest of RIA (XSTACK, OP, etc.) + vectors — use RAM for vectors
     return memory.ram[addr];
 }
 
@@ -41,7 +41,7 @@ pub fn writeByte(addr: u16, val: u8) callconv(.c) void {
     }
     if (addr >= UNASSIGNED_START and addr <= UNASSIGNED_END) return;
     if (addr >= VIA_START and addr <= VIA_END) return;
-    if (addr >= RIA_START and addr <= RIA_UART_END) {
+    if (addr >= RIA_START and addr <= RIA_XRAM_END) {
         ria.writeByte(addr, val);
         return;
     }

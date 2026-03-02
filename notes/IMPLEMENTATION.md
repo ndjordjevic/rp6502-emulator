@@ -16,28 +16,11 @@ The emulator is the **primary learning vehicle** for the RP6502. Each milestone 
 2. **Implement** — Build the feature in the emulator
 3. **Test** — Validate with a 6502 program (proves understanding)
 
-This naturally covers Learning Plan phases 4–8 (chip interactions, RIA firmware, VGA firmware, OS API, advanced topics). The Learning Plan (`rp6502-learning/notes/LEARNING_PLAN.md`) serves as the **reference checklist** of topics to understand; the emulator milestones here are **how you learn them**.
+This naturally covers chip interactions, RIA firmware, VGA firmware, OS API, and advanced topics.
 
 **Two parallel tracks:**
 - **Track A: Emulator** (primary) — study firmware, implement, test. No hardware needed.
 - **Track B: Hardware** (at the bench) — assemble remaining ICs, load RIA firmware, probe with logic analyzer, compare emulator vs real hardware. Runs whenever you're ready.
-
-### Milestone → Learning Plan mapping
-
-| Emulator Milestone | Learning Plan Topics Covered |
-|---|---|
-| 1.1 CPU Core | Phase 1.1 (W65C02S overview) |
-| 1.2 Memory Bus | Phase 4.1 (6502 bus), Phase 4.3 (memory map) |
-| 1.3 Echo Terminal | Phase 5.2 (UART registers) |
-| 1.4 XRAM Portals | Phase 4.3 (XRAM), Phase 5.2 (XRAM access) |
-| 1.5 OS Call Mechanism | Phase 5.2 (OS call registers), Phase 7.1 (OS API) |
-| 1.6 ROM Loading & Reset | Phase 5.1 (RIA initialization), Phase 7.1 (ABI) |
-| 1.7 File I/O | Phase 5.3 (Storage), Phase 7.1 (File I/O calls) |
-| 1.8 Monitor Shell | Phase 5.3 (Monitor) |
-| 1.9 External terminal (minicom/screen) | Terminal/serial access (like real hardware) |
-| 1.10 Run Real Programs | Phase 7.2 (6502 software development) |
-| Phase 2: VGA | Phase 6 (VGA firmware), Phase 7.3 (video programming) |
-| Phase 2: Audio | Phase 8.3 (Audio systems) |
 
 ---
 
@@ -46,6 +29,8 @@ This naturally covers Learning Plan phases 4–8 (chip interactions, RIA firmwar
 **Goal:** Emulate the system without VGA Pico — 6502 CPU, RAM, XRAM, RIA registers, OS API, monitor shell — accessed through a host terminal.
 
 ### 1.1 6502 CPU Core (existing C library)
+
+**Reference:** [notes/CPU_CORE.md](notes/CPU_CORE.md) — vrEmu6502 API, Zig C interop, cpu.zig wrapper, W65C02 details.
 
 Use an existing C 6502 library via Zig's C interop — get a working CPU fast, focus learning on the RP6502 side. Rewriting the CPU from scratch in Zig is a separate exercise (see Phase 3).
 
@@ -72,6 +57,8 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 
 ### 1.2 Memory Bus (Address Decoding)
 
+**Reference:** [notes/MEMORY_BUS.md](notes/MEMORY_BUS.md) — full RP6502 memory map, address decoding, bus.zig design.
+
 **Resources:**
 - Memory map: https://picocomputer.github.io/ria.html
 - CC65 memory layout: https://cc65.github.io/doc/rp6502.html
@@ -88,14 +75,13 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - [✔] Wire CPU's `readByte`/`writeByte` to the bus
 - [✔] Test: verify correct routing with reads/writes at boundary addresses
 
-### 1.3 Echo Terminal (Milestone 1) ← current
+### 1.3 Echo Terminal (Milestone 1)
 
 **Study first:**
 - `rp6502/src/ria/sys/com.h`, `com.c` — UART config, TX/RX circular buffers, stdio driver
 - `rp6502/src/ria/sys/ria.c` — CASE_READ/WRITE for $FFE0–$FFE2
 - Picocomputer docs: https://picocomputer.github.io/ria.html (UART section)
 - Reference: `notes/UART_EMULATOR_REFERENCE.md`
-- Learning plan: Phase 5.2 (UART registers)
 
 **Zig learning:** `std.posix`, raw terminal mode, non-blocking I/O
 
@@ -115,30 +101,30 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 
 ### 1.4 XRAM Portals (Milestone 2)
 
+**Reference:** [notes/XRAM_PORTALS.md](notes/XRAM_PORTALS.md) — full explanation of XRAM, portals, and emulator implementation.
+
 **Study first:**
 - `rp6502/src/ria/sys/ria.c` — CASE_READ/WRITE for $FFE4 and $FFE8, xram array, STEP/ADDR logic
 - `rp6502/src/ria/sys/mem.h` — REGS/REGSW macros, register layout
 - Picocomputer docs: https://picocomputer.github.io/ria.html (XRAM section)
-- Learning plan: Phase 4.3 (Memory System), Phase 5.2 (XRAM access)
 
 **Zig learning:** slices, signed/unsigned step arithmetic
 
 **Tasks:**
-- [ ] Add 64 KB XRAM array
-- [ ] Implement portal 0: RW0 ($FFE4), STEP0 ($FFE5), ADDR0 ($FFE6–7) — read/write XRAM[ADDR0], auto-increment ADDR0 by STEP0
-- [ ] Implement portal 1: RW1 ($FFE8), STEP1 ($FFE9), ADDR1 ($FFEA–B)
-- [ ] Expand `bus.zig` to route $FFE3–$FFEB to `ria.zig` (currently only $FFE0–$FFE2)
-- [ ] Test: 6502 sets ADDR0, writes bytes via RW0, reads them back
+- [✔] Add 64 KB XRAM array
+- [✔] Implement portal 0: RW0 ($FFE4), STEP0 ($FFE5), ADDR0 ($FFE6–7) — read/write XRAM[ADDR0], auto-increment ADDR0 by STEP0
+- [✔] Implement portal 1: RW1 ($FFE8), STEP1 ($FFE9), ADDR1 ($FFEA–B)
+- [✔] Expand `bus.zig` to route $FFE4–$FFEB to `ria.zig` (currently only $FFE0–$FFE2)
+- [✔] Test: 6502 sets ADDR0, writes bytes via RW0, reads them back
 
 **Done when:** 6502 can store and retrieve data in XRAM through both portals with auto-stepping.
 
-### 1.5 OS Call Mechanism (Milestone 3)
+### 1.5 OS Call Mechanism (Milestone 3) ← current
 
 **Study first:**
 - `rp6502/src/ria/sys/ria.c` — action loop, CASE_WRITE($FFEF), BUSY handshake, self-modifying code at $FFF0–$FFF7
 - `rp6502/src/ria/api/api.c` — OS call dispatch table
 - OS ABI docs: https://picocomputer.github.io/os.html
-- Learning plan: Phase 5.2 (OS call registers), Phase 7.1 (OS API)
 
 **Zig learning:** state machines, tagged unions, enum dispatch
 
@@ -165,7 +151,6 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - `rp6502/src/ria/mon/rom.c` — ROM loader, .rp6502 file format parsing
 - `rp6502/src/ria/main.c` — boot sequence, reset flow
 - .rp6502 format: https://picocomputer.github.io/os.html
-- Learning plan: Phase 5.1 (RIA initialization)
 
 **Zig learning:** file I/O, command-line args (`std.process.args`), error handling
 
@@ -186,7 +171,6 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - `rp6502/src/ria/api/osdir.c` — directory operation implementations
 - `rp6502/src/ria/usb/msc.c` — USB mass storage (what the emulator replaces with host filesystem)
 - OS docs: https://picocomputer.github.io/os.html (file I/O calls)
-- Learning plan: Phase 5.3 (Storage), Phase 7.1 (File I/O)
 
 **Zig learning:** `std.fs`, error unions, allocators
 
@@ -211,7 +195,6 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - `rp6502/src/ria/mon/mon.c` — monitor main loop, command parser
 - `rp6502/src/ria/mon/rom.c` — ROM loading commands
 - `rp6502/src/ria/mon/ram.c` — memory read/write commands
-- Learning plan: Phase 5.3 (Monitor)
 
 **Tasks:**
 - [ ] Implement command parser (input line → command + args)

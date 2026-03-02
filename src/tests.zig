@@ -62,7 +62,7 @@ test "bus address decoding" {
     try std.testing.expectEqual(@as(u8, 0x80), bus.readByte(0xFFE0, false)); // READY: RX empty again
     bus.writeByte(0xFFE1, 0x58); // TX write (no-op in test, just no crash)
 
-    // $FFE3–$FFFF: still RAM (vectors)
+    // Vectors $FFFC–$FFFF in RAM
     memory.ram[0xFFFC] = 0x34;
     memory.ram[0xFFFD] = 0x12;
     try std.testing.expectEqual(@as(u8, 0x34), bus.readByte(0xFFFC, false));

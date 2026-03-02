@@ -9,6 +9,7 @@ const posix = std.posix;
 /// Returns null when not a TTY (piped) or on Windows. Call restore() on exit.
 pub fn enterRawMode() !?posix.termios {
     if (builtin.os.tag == .windows) return null;
+    if (!std.fs.File.stdin().isTty()) return null; // skip when piped or in non-interactive context
     const fd = posix.STDIN_FILENO;
     const saved = posix.tcgetattr(fd) catch return null;
     var raw = saved;
