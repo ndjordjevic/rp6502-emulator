@@ -12,6 +12,7 @@ For connecting to the emulator (or real hardware):
 |------------|--------|
 | **minicom**| `brew install minicom` — classic serial terminal; best for “real serial” feel. |
 | **screen** | Built-in — attach to serial devices and PTYs: `screen /dev/tty.xxx 115200`. No install. |
+| **ZOC**    | [ZOC Terminal](https://www.emtec.com/zoc/index.html) — professional terminal for Windows and macOS (serial, SSH, Telnet, etc.). |
 | **tmux**   | `brew install tmux` — session multiplexer; attach to a running emulator session (see below). Not a serial client. |
 
 **Recommendation:** Use **minicom** for a dedicated serial terminal (once the emulator exposes a PTY/socket), or **screen** for zero-install attachment to a PTY. For “just use another window on the same process,” use **tmux** (option 2 below).

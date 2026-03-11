@@ -119,7 +119,26 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 
 **Done when:** 6502 can store and retrieve data in XRAM through both portals with auto-stepping.
 
-### 1.5 OS Call Mechanism (Milestone 3) ← current
+### 1.5 ROM Loading & Reset (Milestone 3)
+
+**Study first:**
+- `rp6502/src/ria/mon/rom.c` — ROM loader, .rp6502 file format parsing
+- `rp6502/src/ria/main.c` — boot sequence, reset flow
+- .rp6502 format: https://picocomputer.github.io/os.html
+
+**Zig learning:** file I/O, command-line args (`std.process.args`), error handling
+
+**Tasks:**
+- [ ] Parse command-line args (ROM file path, drive directory)
+- [ ] Load .rp6502 ROM file into RAM (parse header, load segments)
+- [ ] Support raw binary loading as alternative
+- [ ] Set RESET vector ($FFFC–$FFFD) to entry point from ROM
+- [ ] Implement reset sequence: hold CPU → load → release
+- [ ] Test: load and run a simple compiled program from disk
+
+**Done when:** `zig build run -- hello.rp6502` loads and runs a compiled program.
+
+### 1.6 OS Call Mechanism (Milestone 4)
 
 **Study first:**
 - `rp6502/src/ria/sys/ria.c` — action loop, CASE_WRITE($FFEF), BUSY handshake, self-modifying code at $FFF0–$FFF7
@@ -144,25 +163,6 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 - [ ] Test: 6502 invokes `zxstack` and `lrand`, gets result back
 
 **Done when:** 6502 can call OS operations via OP write, spin on BUSY, and receive return values.
-
-### 1.6 ROM Loading & Reset (Milestone 4)
-
-**Study first:**
-- `rp6502/src/ria/mon/rom.c` — ROM loader, .rp6502 file format parsing
-- `rp6502/src/ria/main.c` — boot sequence, reset flow
-- .rp6502 format: https://picocomputer.github.io/os.html
-
-**Zig learning:** file I/O, command-line args (`std.process.args`), error handling
-
-**Tasks:**
-- [ ] Parse command-line args (ROM file path, drive directory)
-- [ ] Load .rp6502 ROM file into RAM (parse header, load segments)
-- [ ] Support raw binary loading as alternative
-- [ ] Set RESET vector ($FFFC–$FFFD) to entry point from ROM
-- [ ] Implement reset sequence: hold CPU → load → release
-- [ ] Test: load and run a simple compiled program from disk
-
-**Done when:** `zig build run -- hello.rp6502` loads and runs a compiled program.
 
 ### 1.7 File I/O (Milestone 5)
 
@@ -229,11 +229,13 @@ Use an existing C 6502 library via Zig's C interop — get a working CPU fast, f
 **Study first:**
 - Example programs: `/Users/nenaddjordjevic/CProjects/examples/src/`
 - ehBASIC: `/Users/nenaddjordjevic/CProjects/ehbasic/`
+- Adventure (Colossal Cave): `/Users/nenaddjordjevic/CProjects/adventure/` — `load advent4` from monitor
 - Learning plan: Phase 7.2 (6502 software development)
 
 **Tasks:**
 - [ ] Load and run hello world / simple text programs
 - [ ] Load and run memory test programs
+- [ ] Load and run ADVENT4 (Colossal Cave Adventure)
 - [ ] Load and run ehBASIC
 - [ ] Debug and fix issues until real programs work
 - [ ] Compare behavior against real hardware (if assembled)
